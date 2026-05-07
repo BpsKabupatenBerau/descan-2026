@@ -6,18 +6,31 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        // Drop default Laravel users table first if it exists
+        Schema::dropIfExists('users');
+
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('nama_lengkap');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('role', 50)->default('admin');
+            // Possible values: admin | editor | viewer
+
+            $table->string('nomor_hp', 20)->nullable();
+            // varchar — phone numbers can start with 0 or contain +62
+
             $table->string('password');
+            // 'password' here is the COLUMN NAME (type is varchar/string)
+            // Previously written as "password password" in DBML — that was wrong
+
+            $table->string('foto', 500)->nullable();
+            // Stores file path under storage/app/public/avatars/
+            // NOT binary data — images stored on disk, path stored in DB
+
             $table->rememberToken();
+            $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
         });
 
@@ -37,13 +50,10 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
     }
 };
