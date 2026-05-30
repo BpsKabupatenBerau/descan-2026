@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+@use('App\Models\Setting')
 <html lang="id" class="scroll-smooth">
 
 <head>
@@ -83,10 +84,10 @@
                                 Semua Statistik
                             </a>
                             <hr class="my-1">
-                            @foreach(\App\Models\StatisticCategory::active()->roots()->orderBy('order')->get() as $cat)
+                            @foreach(\App\Models\KategoriStatistik::active()->orderBy('id')->get() as $cat)
                                 <a href="{{ route('statistik.category', $cat->slug) }}"
                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50">
-                                    {{ $cat->name }}
+                                    {{ $cat->judul_kategori }}
                                 </a>
                             @endforeach
                         </div>

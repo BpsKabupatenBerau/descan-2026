@@ -13,6 +13,10 @@ class KategoriSpasial extends Model
 
     protected $casts = ['is_active' => 'boolean'];
 
+    // Compatibility accessors for portal views
+    public function getNameAttribute(): string { return $this->judul_kategori; }
+    public function getColorAttribute(): string { return $this->warna_marker ?? '#3B82F6'; }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

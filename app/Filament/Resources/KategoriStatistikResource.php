@@ -18,6 +18,7 @@ use BackedEnum;
 
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 
 class KategoriStatistikResource extends Resource
 {
@@ -29,12 +30,12 @@ class KategoriStatistikResource extends Resource
     protected static ?string $modelLabel      = 'Kategori Statistik';
 
     // ── Filament 5: schema() replaces form() ─────────────────
-    public static function schema(Schema $schema): Schema
+    public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make()->schema([
+            Section::make('Informasi Kategori')->schema([
                 TextInput::make('judul_kategori')
-                    ->label('Nama Kategori')
+                    ->label('Judul Kategori')
                     ->required()
                     ->maxLength(255)
                     ->placeholder('Contoh: Kependudukan'),
@@ -83,12 +84,12 @@ class KategoriStatistikResource extends Resource
                     ->sortable(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -96,7 +97,7 @@ class KategoriStatistikResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListKategoriStatistik::route('/'),
+            'index'  => Pages\ManageMasterStatistik::route('/'),
             'create' => Pages\CreateKategoriStatistik::route('/create'),
             'edit'   => Pages\EditKategoriStatistik::route('/{record}/edit'),
         ];

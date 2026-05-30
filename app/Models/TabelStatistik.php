@@ -11,12 +11,24 @@ class TabelStatistik extends Model
 {
     protected $table    = 'tabel_statistik';
     protected $fillable = [
-        'judul_tabel', 'slug', 'kategori_id', 'baris_tabel_ke',
-        'tipe_chart', 'sumber_data', 'satuan_id',
-        'periode_data', 'is_active', 'user_id',
+        'judul_tabel', 'slug', 'kategori_id', 'baris_tabel_ke', 'tipe_chart',
+        'sumber_data', 'satuan_id', 'periode_data', 'is_active', 'user_id',
+        'deskripsi', 'nama_baris'
     ];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = [
+        'is_active'  => 'boolean',
+        'nama_baris' => 'array',
+    ];
+
+    // Compatibility accessors for portal views
+    public function getTitleAttribute(): string { return $this->judul_tabel; }
+    public function getSummaryValueAttribute(): ?string { return $this->toKpiValue(); }
+    public function getUnitAttribute(): ?string { return $this->satuan?->nama_satuan; }
+    public function getDataYearAttribute(): ?string { return $this->inputData()->orderByDesc('tahun_id')->first()?->tahun?->tahun; }
+    public function getSummaryLabelAttribute(): ?string { return $this->judul_tabel; }
+    public function getSourceAttribute(): ?string { return $this->sumber_data; }           // alias for view
+    public function getDescriptionAttribute(): ?string { return $this->sumber_data; }      // alias for view
 
     // Auto-generate slug on create
     protected static function booted(): void

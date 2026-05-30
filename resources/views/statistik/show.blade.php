@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $statistic->title)
+@section('title', $statistic->judul_tabel)
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -24,7 +24,7 @@
         <div class="lg:col-span-1">
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sticky top-20">
                 <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3">
-                    {{ $category->name }}
+                    {{ $category->judul_kategori }}
                 </p>
                 <ul class="space-y-1">
                     @foreach($siblings as $sibling)
@@ -34,7 +34,7 @@
                                {{ $sibling->id === $statistic->id
                                    ? 'bg-green-50 text-green-700 font-medium'
                                    : 'text-gray-600 hover:bg-gray-50' }}">
-                            {{ $sibling->title }}
+                            {{ $sibling->judul_tabel }}
                         </a>
                     </li>
                     @endforeach
@@ -50,9 +50,9 @@
                 <div class="flex items-start justify-between gap-4">
                     <div>
                         <span class="inline-block bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full mb-2">
-                            {{ $category->name }}
+                            {{ $category->judul_kategori }}
                         </span>
-                        <h1 class="text-2xl font-bold text-gray-900">{{ $statistic->title }}</h1>
+                        <h1 class="text-2xl font-bold text-gray-900">{{ $statistic->judul_tabel }}</h1>
                         @if($statistic->description)
                             <p class="text-gray-500 mt-2">{{ $statistic->description }}</p>
                         @endif
@@ -63,8 +63,8 @@
                     @if($statistic->data_year)
                         <span>📅 Data Tahun {{ $statistic->data_year }}</span>
                     @endif
-                    @if($statistic->unit)
-                        <span>📏 Satuan: {{ $statistic->unit }}</span>
+                    @if($statistic->satuan?->judul_satuan)
+                        <span>📏 Satuan: {{ $statistic->satuan->judul_satuan }}</span>
                     @endif
                     @if($statistic->source)
                         <span>📖 Sumber: {{ $statistic->source }}</span>
@@ -75,19 +75,19 @@
             {{-- Chart / Data --}}
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
 
-                @if($statistic->chart_type === 'number')
+                @if($statistic->tipe_chart === 'number')
                     {{-- KPI Number --}}
                     <div class="text-center py-10">
                         <p class="text-6xl font-black text-green-700">{{ $statistic->summary_value }}</p>
-                        <p class="text-xl text-gray-500 mt-3">{{ $statistic->summary_label ?? $statistic->title }}</p>
-                        @if($statistic->unit)
-                            <p class="text-gray-400 mt-1">{{ $statistic->unit }}</p>
+                        <p class="text-xl text-gray-500 mt-3">{{ $statistic->summary_label ?? $statistic->judul_tabel }}</p>
+                        @if($statistic->satuan?->judul_satuan)
+                            <p class="text-gray-400 mt-1">{{ $statistic->satuan->judul_satuan }}</p>
                         @endif
                     </div>
 
-                @elseif($statistic->chart_type === 'table')
+                @elseif($statistic->tipe_chart === 'table')
                     {{-- Table view --}}
-                    @php $data = $statistic->getChartJsData(); @endphp
+                    @php $data = $statistic->toChartJsData(); @endphp
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left">
                             <thead>
@@ -105,7 +105,7 @@
                                     @foreach($data['datasets'] ?? [] as $ds)
                                         <td class="py-3 px-4 text-gray-600">
                                             {{ $ds['data'][$i] ?? '-' }}
-                                            @if($statistic->unit) {{ $statistic->unit }} @endif
+                                            @if($statistic->satuan?->judul_satuan) {{ $statistic->satuan->judul_satuan }} @endif
                                         </td>
                                     @endforeach
                                 </tr>
@@ -134,8 +134,8 @@
     const ctx = document.getElementById('mainChart');
     if (!ctx) return;
 
-    const chartData = @json($statistic->getChartJsData());
-    const chartType = @json($statistic->chart_type);
+    const chartData = @json($statistic->toChartJsData());
+    const chartType = @json($statistic->tipe_chart);
 
     // Auto-generate colors if not provided
     const PALETTE = [
@@ -173,7 +173,7 @@
                 tooltip: {
                     callbacks: {
                         label: (ctx) => {
-                            const unit = @json($statistic->unit ?? '');
+                            const unit = @json($statistic->satuan?->judul_satuan ?? '');
                             return ` ${ctx.dataset.label ?? ''}: ${ctx.parsed.y ?? ctx.parsed} ${unit}`.trim();
                         }
                     }

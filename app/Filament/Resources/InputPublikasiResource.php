@@ -4,104 +4,123 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InputPublikasiResource\Pages;
 use App\Models\InputPublikasi;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
+use Filament\Actions;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
-use UnitEnum;
-use BackedEnum;
-
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use BackedEnum;
+use UnitEnum;
 
 class InputPublikasiResource extends Resource
 {
-    protected static ?string $model           = InputPublikasi::class;
-    protected static string|BackedEnum|null $navigationIcon  = 'heroicon-o-document-text';
-    protected static string|UnitEnum|null   $navigationGroup = 'Konten';
-    protected static ?string $navigationLabel = 'Publikasi / Dokumen';
-    protected static ?int    $navigationSort  = 3;
-    protected static ?string $modelLabel      = 'Publikasi';
+    protected static ?string $model = InputPublikasi::class;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
+    protected static string|UnitEnum|null $navigationGroup = 'Konten';
+    protected static ?string $navigationLabel = 'Publikasi';
+    protected static ?int $navigationSort = 4;
+    protected static ?string $modelLabel = 'Publikasi';
 
-    public static function schema(Schema $schema): Schema
+    public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Informasi Dokumen')
+            Grid::make(2)
+                ->columnSpanFull()
                 ->schema([
-                    TextInput::make('judul_publikasi')
-                        ->label('Judul')
-                        ->required()
-                        ->maxLength(255)
-                        ->live(onBlur: true)
-                        ->afterStateUpdated(fn($state, \Filament\Forms\Set $set) =>
-                            $set('slug', Str::slug($state))
-                        ),
+                    Section::make('Informasi Dokumen')
+                        ->schema([
+                            TextInput::make('judul_publikasi')
+                                ->label('Judul')
+                                ->placeholder('Contoh: Monografi Desa 2024')
+                                ->required()
+                                ->maxLength(255)
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(fn ($state, \Filament\Forms\Set $set) => $set('slug', Str::slug($state)))
+                                ->columnSpanFull(),
 
-                    TextInput::make('slug')
-                        ->label('Slug')
-                        ->required()
-                        ->unique(ignoreRecord: true),
+                            TextInput::make('slug')
+                                ->required()
+                                ->unique(ignoreRecord: true)
+                                ->hidden(),
 
-                    Textarea::make('deskripsi_publikasi')
-                        ->label('Deskripsi')
-                        ->rows(4)
-                        ->nullable(),
+                            Textarea::make('deskripsi_publikasi')
+                                ->label('Deskripsi')
+                                ->placeholder('Ringkasan isi dokumen...')
+                                ->rows(4)
+                                ->nullable()
+                                ->columnSpanFull(),
 
-                    Select::make('kategori_publikasi_id')
-                        ->label('Kategori Publikasi')
-                        ->relationship('kategoriPublikasi', 'kategori')
-                        ->searchable()
-                        ->preload()
-                        ->required()
-                        ->createOptionForm([
-                            TextInput::make('kategori')
-                                ->label('Nama Kategori Baru')
-                                ->required(),
+                            Select::make('kategori_publikasi_id')
+                                ->label('Kategori')
+                                ->relationship('kategoriPublikasi', 'kategori')
+                                ->searchable()
+                                ->preload()
+                                ->placeholder('Monografi / Laporan / Perdes / RKPD')
+                                ->required()
+                                ->createOptionForm([
+                                    TextInput::make('kategori')
+                                        ->label('Nama Kategori Baru')
+                                        ->required(),
+                                ])
+                                ->columnSpanFull(),
+
+                            Select::make('tahun_id')
+                                ->label('Tahun Data')
+                                ->relationship('tahun', 'tahun')
+                                ->searchable()
+                                ->placeholder('2024')
+                                ->required()
+                                ->columnSpanFull(),
+
+                            TextInput::make('penulis')
+                                ->label('Penulis / Penyusun')
+                                ->placeholder('Contoh: Sekretaris Desa')
+                                ->nullable()
+                                ->columnSpanFull(),
+
+                            Toggle::make('is_active')
+                                ->label('Aktif')
+                                ->helperText('Tampilkan di halaman publik')
+                                ->default(true)
+                                ->columnSpanFull(),
                         ]),
 
-                    Select::make('tahun_id')
-                        ->label('Tahun Publikasi')
-                        ->relationship('tahun', 'tahun')
-                        ->searchable()
-                        ->required(),
+                    Grid::make(1)
+                        ->schema([
+                            Section::make('Upload File PDF')
+                                ->schema([
+                                    FileUpload::make('file_publikasi')
+                                        ->label('')
+                                        ->acceptedFileTypes(['application/pdf'])
+                                        ->directory('publikasi')
+                                        ->disk('public')
+                                        ->required()
+                                        ->maxSize(51200)
+                                        ->helperText('Format: PDF - Maks 50 MB')
+                                        ->afterStateUpdated(function ($state, \Filament\Forms\Set $set) {
+                                            if ($state) {
+                                                $set('nama_file_unduhan', basename($state));
+                                            }
+                                        }),
+                                ]),
 
-                    TextInput::make('penulis')
-                        ->label('Penulis / Penyusun')
-                        ->nullable(),
-                ])
-                ->columns(2),
-
-            Section::make('Upload Dokumen PDF')
-                ->schema([
-                    FileUpload::make('file_publikasi')
-                        ->label('File PDF')
-                        ->acceptedFileTypes(['application/pdf'])
-                        ->directory('publikasi')
-                        ->disk('public')
-                        ->required()
-                        ->maxSize(51200)
-                        ->helperText('Format: PDF · Maks 50 MB')
-                        ->afterStateUpdated(function ($state, \Filament\Forms\Set $set) {
-                            if ($state) {
-                                $set('nama_file_unduhan', basename($state));
-                            }
-                        }),
-
-                    TextInput::make('nama_file_unduhan')
-                        ->label('Nama File Unduhan')
-                        ->helperText('Nama file yang tampil saat pengguna mengunduh')
-                        ->nullable(),
-
-                    Toggle::make('is_active')
-                        ->label('Aktif')
-                        ->default(true),
-                ])
-                ->columns(2),
+                            Section::make('Info File')
+                                ->schema([
+                                    TextInput::make('nama_file_unduhan')
+                                        ->label('')
+                                        ->placeholder('monografi-desa-2024.pdf')
+                                        ->nullable(),
+                                ]),
+                        ]),
+                ]),
         ]);
     }
 
@@ -146,19 +165,19 @@ class InputPublikasiResource extends Resource
                     ->label('Status'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('lihat_pdf')
+                Actions\EditAction::make(),
+                Actions\Action::make('lihat_pdf')
                     ->label('Lihat PDF')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('info')
-                    ->url(fn(InputPublikasi $record) => asset('storage/'.$record->file_publikasi))
+                    ->url(fn (InputPublikasi $record) => asset('storage/' . $record->file_publikasi))
                     ->openUrlInNewTab(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->defaultSort('updated_at', 'desc')
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -166,9 +185,9 @@ class InputPublikasiResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListInputPublikasi::route('/'),
+            'index' => Pages\ListInputPublikasi::route('/'),
             'create' => Pages\CreateInputPublikasi::route('/create'),
-            'edit'   => Pages\EditInputPublikasi::route('/{record}/edit'),
+            'edit' => Pages\EditInputPublikasi::route('/{record}/edit'),
         ];
     }
 }

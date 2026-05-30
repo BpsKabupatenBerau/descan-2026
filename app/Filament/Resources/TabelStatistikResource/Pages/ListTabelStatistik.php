@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\TabelStatistikResource\Pages;
 
 use App\Filament\Resources\TabelStatistikResource;
+use App\Filament\Widgets\StatistikStatsWidget;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
@@ -12,6 +13,17 @@ class ListTabelStatistik extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [Actions\CreateAction::make()];
+        return [
+            Actions\CreateAction::make()
+                ->label('+ Tambah Statistik')
+                ->url(fn (): string => \App\Filament\Resources\InputDataTabelResource::getUrl('create')),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            StatistikStatsWidget::class,
+        ];
     }
 }
