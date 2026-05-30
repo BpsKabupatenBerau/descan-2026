@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\InputDataSpasialResource\Pages;
 use App\Models\InputDataSpasial;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
@@ -17,26 +18,31 @@ use BackedEnum;
 
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 
 class InputDataSpasialResource extends Resource
 {
     protected static ?string $model           = InputDataSpasial::class;
     protected static string|BackedEnum|null $navigationIcon  = 'heroicon-o-map-pin';
     protected static string|UnitEnum|null   $navigationGroup = 'Konten';
-    protected static ?string $navigationLabel = 'Spasial / Peta';
-    protected static ?int    $navigationSort  = 1;
+    protected static ?string $navigationLabel = 'Spasial/Peta';
+    protected static ?int    $navigationSort  = 2;
     protected static ?string $modelLabel      = 'Lokasi Spasial';
 
-    public static function schema(Schema $schema): Schema
+    public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Informasi Lokasi')
+            Grid::make(2)
+                ->columnSpanFull()
                 ->schema([
+                    Section::make('Informasi Lokasi')
+                        ->schema([
                     Select::make('kategori_id')
-                        ->label('Kategori Spasial')
+                        ->label('Kategori')
                         ->relationship('kategori', 'judul_kategori')
                         ->searchable()
                         ->preload()
+                        ->placeholder('- Pilih Kategori -')
                         ->required(),
 
                     TextInput::make('nama_lokasi')
@@ -65,23 +71,38 @@ class InputDataSpasialResource extends Resource
                         ->url()
                         ->nullable()
                         ->placeholder('https://'),
-                ])
-                ->columns(2),
+
+                    Toggle::make('is_active')
+                        ->label('Aktif')
+                        ->helperText('Tampilkan di halaman publik')
+                        ->default(true)
+                        ->columnSpanFull(),
+                        ])
+                        ->columns(1),
 
             Section::make('Koordinat GPS')
-                ->description('💡 Tip: Buka Google Maps → klik lokasi → salin koordinat')
+                ->description('💡 Tip: Salin koordinat dari Google Maps')
                 ->schema([
                     TextInput::make('latitude')
                         ->label('Latitude (Lintang)')
                         ->numeric()
                         ->required()
-                        ->placeholder('-1.2379000'),
+                        ->placeholder('-1.2379')
+                        ->helperText('Contoh: -1.2379')
+                        ->live(onBlur: true),
 
                     TextInput::make('longitude')
                         ->label('Longitude (Bujur)')
                         ->numeric()
                         ->required()
-                        ->placeholder('116.8529000'),
+                        ->placeholder('116.8529')
+                        ->helperText('Contoh: 116.8529')
+                        ->live(onBlur: true),
+
+                    \Filament\Forms\Components\Placeholder::make('map_preview')
+                        ->label('Pratinjau Peta')
+                        ->columnSpanFull()
+                        ->content(view('filament.components.map-preview')),
                 ])
                 ->columns(2),
 
@@ -92,11 +113,9 @@ class InputDataSpasialResource extends Resource
                         ->keyLabel('Nama Field')
                         ->valueLabel('Nilai')
                         ->addButtonLabel('+ Tambah Field')
-                        ->nullable(),
-
-                    Toggle::make('is_active')
-                        ->label('Aktif')
-                        ->default(true),
+                        ->nullable()
+                        ->columnSpanFull(),
+                ]),
                 ]),
         ]);
     }
@@ -104,6 +123,7 @@ class InputDataSpasialResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->searchPlaceholder('Cari nama lokasi..')
             ->columns([
                 Tables\Columns\TextColumn::make('nama_lokasi')
                     ->label('Nama Lokasi')
@@ -118,14 +138,16 @@ class InputDataSpasialResource extends Resource
                     ->limit(40)
                     ->placeholder('-'),
                 Tables\Columns\TextColumn::make('latitude')
-                    ->label('Lat')
+                    ->label('Latitude')
                     ->numeric(decimalPlaces: 4),
                 Tables\Columns\TextColumn::make('longitude')
-                    ->label('Lng')
+                    ->label('Longitude')
                     ->numeric(decimalPlaces: 4),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->label('Aktif')
-                    ->boolean(),
+                Tables\Columns\TextColumn::make('is_active')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn(bool $state): string => $state ? 'success' : 'danger')
+                    ->formatStateUsing(fn(bool $state): string => $state ? 'Aktif' : 'Nonaktif'),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Diperbarui')
                     ->since(),
@@ -138,12 +160,12 @@ class InputDataSpasialResource extends Resource
                     ->label('Status'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

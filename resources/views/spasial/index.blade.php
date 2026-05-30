@@ -131,8 +131,9 @@ window.filterCategory = function(categoryId) {
         activeBtn.classList.remove('text-gray-600');
     }
 
-    allMarkers.forEach(({ marker, categoryName }) => {
-        const inCategory = categoryId === 'all' || categoryName === categoryId;
+    allMarkers.forEach(({ marker }) => {
+        const p = marker._feature;
+        const inCategory = categoryId === 'all' || p.category_id == categoryId;
         if (inCategory) {
             if (!map.hasLayer(marker)) map.addLayer(marker);
         } else {

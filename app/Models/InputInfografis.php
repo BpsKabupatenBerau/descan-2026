@@ -17,6 +17,13 @@ class InputInfografis extends Model
 
     protected $casts = ['is_active' => 'boolean'];
 
+    // Compatibility accessors for portal views
+    public function getTitleAttribute(): string { return $this->judul_infografis; }
+    public function getImageUrlAttribute(): string { return $this->file_url; }
+    public function getDataYearAttribute(): ?string { return $this->tahun?->tahun; }
+    public function getCategoryAttribute(): ?string { return $this->kategori?->judul_kategori; }
+    public function getDescriptionAttribute(): ?string { return $this->deskripsi_infografis; }
+
     protected static function booted(): void
     {
         static::creating(function (InputInfografis $model) {

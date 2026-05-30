@@ -10,4 +10,9 @@ class CreateKategoriStatistik extends CreateRecord
 {
     protected static string $resource = KategoriStatistikResource::class;
 
+    public function getTitle(): string
+    {
+        return 'Tambah Kategori Statistik';
+    }
+
 }

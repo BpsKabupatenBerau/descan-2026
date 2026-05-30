@@ -12,9 +12,11 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Support\HtmlString;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
@@ -34,6 +36,10 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::hex('#16803C'),
             ])
             ->brandName('DESCAN 2026')
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): HtmlString => new HtmlString(view('filament.admin-theme')->render()),
+            )
             // Filament 5 still supports darkMode() toggle
             ->darkMode(true)
             ->discoverResources(
@@ -56,8 +62,6 @@ class AdminPanelProvider extends PanelProvider
                 RecentActivityWidget::class,
             ])
             ->navigationGroups([
-                NavigationGroup::make('Statistik'),
-
                 NavigationGroup::make('Konten'),
 
                 NavigationGroup::make('Master Data')

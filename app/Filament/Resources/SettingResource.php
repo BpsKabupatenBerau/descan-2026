@@ -14,6 +14,7 @@ use BackedEnum;
 
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 
 class SettingResource extends Resource
 {
@@ -21,7 +22,7 @@ class SettingResource extends Resource
     protected static string|BackedEnum|null $navigationIcon  = 'heroicon-o-cog-6-tooth';
     protected static string|UnitEnum|null   $navigationGroup = 'Administrasi';
     protected static ?string $navigationLabel = 'Pengaturan Situs';
-    protected static ?int    $navigationSort  = 1;
+    protected static ?int    $navigationSort  = 2;
     protected static ?string $modelLabel      = 'Pengaturan';
 
     public static function schema(Schema $schema): Schema
@@ -91,12 +92,12 @@ class SettingResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

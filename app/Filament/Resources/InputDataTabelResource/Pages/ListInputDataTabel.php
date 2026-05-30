@@ -12,6 +12,20 @@ class ListInputDataTabel extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [Actions\CreateAction::make()];
+        return [
+            Actions\CreateAction::make()
+                ->url(fn() => InputDataTabelResource::getUrl('create', [
+                    'tabel_statistik_id' => request()->query('tableFilter')
+                ]))
+        ];
+    }
+
+    public function getTableQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getTableQuery();
+        if ($tableId = request()->query('tableFilter')) {
+            $query->where('tabel_statistik_id', $tableId);
+        }
+        return $query;
     }
 }

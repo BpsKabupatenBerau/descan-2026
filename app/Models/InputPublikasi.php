@@ -22,6 +22,15 @@ class InputPublikasi extends Model
         'ukuran_file'    => 'integer',
     ];
 
+    // Compatibility accessors for portal views
+    public function getTitleAttribute(): string { return $this->judul_publikasi; }
+    public function getCategoryAttribute(): ?string { return $this->kategoriPublikasi?->kategori; }
+    public function getPublishedDateAttribute() { return $this->created_at; }
+    public function getFileSizeHumanAttribute(): string { return $this->ukuran_file_terbaca; }
+    public function getDescriptionAttribute(): ?string { return $this->deskripsi_publikasi; }
+    public function getDataYearAttribute(): ?string { return $this->tahun?->tahun; }        // alias for view
+    public function getAuthorAttribute(): ?string { return $this->penulis; }                // alias for view
+
     protected static function booted(): void
     {
         static::creating(function (InputPublikasi $model) {

@@ -9,9 +9,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class KategoriStatistik extends Model
 {
     protected $table    = 'kategori_statistik';
-    protected $fillable = ['judul_kategori', 'logo_kategori', 'user_id', 'is_active'];
+    protected $fillable = ['judul_kategori', 'slug', 'logo_kategori', 'user_id', 'is_active'];
 
     protected $casts = ['is_active' => 'boolean'];
+ 
+    protected static function booted(): void
+    {
+        static::creating(function (KategoriStatistik $model) {
+            if (empty($model->slug)) {
+                $model->slug = \Illuminate\Support\Str::slug($model->judul_kategori);
+            }
+        });
+    }
+
+    // Compatibility accessor for portal views
+    public function getNameAttribute(): string { return $this->judul_kategori; }
+    public function getIconAttribute(): ?string { return $this->logo_kategori; }
 
     public function user(): BelongsTo
     {
@@ -21,6 +34,11 @@ class KategoriStatistik extends Model
     public function tabelStatistik(): HasMany
     {
         return $this->hasMany(TabelStatistik::class, 'kategori_id');
+    }
+
+    public function statistics(): HasMany
+    {
+        return $this->tabelStatistik();
     }
 
     public function infografis(): HasMany

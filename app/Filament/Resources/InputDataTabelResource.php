@@ -6,8 +6,10 @@ use App\Filament\Resources\InputDataTabelResource\Pages;
 use App\Models\InputDataTabel;
 use App\Models\TabelStatistik;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -17,6 +19,7 @@ use BackedEnum;
 
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Actions;
 
 class InputDataTabelResource extends Resource
 {
@@ -26,79 +29,110 @@ class InputDataTabelResource extends Resource
     protected static ?string $navigationLabel = 'Input Data Statistik';
     protected static ?int    $navigationSort  = 2;
     protected static ?string $modelLabel      = 'Input Data';
+    protected static bool $shouldRegisterNavigation = false;
 
-    public static function schema(Schema $schema): Schema
+    public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Pilih Tabel & Periode')
+            Grid::make(2)
+                ->columnSpanFull()
                 ->schema([
-                    Select::make('tabel_statistik_id')
-                        ->label('Tabel Statistik')
-                        ->relationship('tabelStatistik', 'judul_tabel')
-                        ->searchable()
-                        ->preload()
-                        ->required()
-                        ->live()
-                        ->afterStateUpdated(function ($state, \Filament\Forms\Set $set) {
-                            if ($state) {
-                                $tabel = TabelStatistik::find($state);
-                                if ($tabel) {
-                                    $set('kategori_id', $tabel->kategori_id);
-                                }
-                            }
-                        }),
+                    Section::make('Informasi Statistik')
+                        ->schema([
+                            Select::make('kategori_id')
+                                ->label('Kategori')
+                                ->relationship('kategori', 'judul_kategori')
+                                ->placeholder('-- Pilih Kategori --')
+                                ->required()
+                                ->disabled()
+                                ->dehydrated()
+                                ->columnSpanFull(),
 
-                    Select::make('kategori_id')
-                        ->label('Kategori')
-                        ->relationship('kategori', 'judul_kategori')
-                        ->required()
-                        ->disabled()
-                        ->dehydrated(),
+                            Select::make('tabel_statistik_id')
+                                ->label('Judul Tabel')
+                                ->relationship('tabelStatistik', 'judul_tabel')
+                                ->searchable()
+                                ->preload()
+                                ->placeholder('-- Pilih Tabel Statistik --')
+                                ->required()
+                                ->live()
+                                ->default(request()->query('tabel_statistik_id'))
+                                ->afterStateHydrated(function ($state, $set) {
+                                    if ($state) {
+                                        $tabel = TabelStatistik::find($state);
+                                        if ($tabel) {
+                                            $set('kategori_id', $tabel->kategori_id);
+                                            $set('periode_data', $tabel->periode_data);
+                                        }
+                                    }
+                                })
+                                ->afterStateUpdated(function ($state, $set) {
+                                    if ($state) {
+                                        $tabel = TabelStatistik::find($state);
+                                        if ($tabel) {
+                                            $set('kategori_id', $tabel->kategori_id);
+                                            $set('periode_data', $tabel->periode_data);
+                                        }
+                                    }
+                                })
+                                ->columnSpanFull(),
 
-                    Select::make('tahun_id')
-                        ->label('Tahun Data')
-                        ->relationship('tahun', 'tahun')
-                        ->searchable()
-                        ->required(),
+                            TextInput::make('periode_data')
+                                ->label('Periode Data')
+                                ->disabled()
+                                ->dehydrated(false)
+                                ->placeholder('-- Pilih Tahun --')
+                                ->columnSpanFull(),
 
-                    Select::make('bulan_id')
-                        ->label('Bulan (Opsional)')
-                        ->relationship('bulan', 'nama')
-                        ->searchable()
-                        ->nullable()
-                        ->helperText('Kosongkan untuk data tahunan'),
-                ])
-                ->columns(2),
+                            Select::make('tahun_id')
+                                ->label(' ')
+                                ->relationship('tahun', 'tahun')
+                                ->searchable()
+                                ->placeholder('-- Pilih Tahun --')
+                                ->required()
+                                ->columnSpanFull(),
 
-            Section::make('Nilai Data')
+                            Select::make('bulan_id')
+                                ->label(' ')
+                                ->relationship('bulan', 'nama')
+                                ->searchable()
+                                ->placeholder('-- Pilih Bulan (Apabila data terkecilnya bulan) --')
+                                ->nullable()
+                                ->columnSpanFull(),
+
+                            Toggle::make('is_active')
+                                ->label('Aktif')
+                                ->helperText('Tampilkan di halaman publik')
+                                ->default(true)
+                                ->columnSpanFull(),
+                        ]),
+
+                    Section::make('Upload Excel')
+                        ->visible(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord)
+                        ->schema([
+                            FileUpload::make('file_excel')
+                                ->label('')
+                                ->acceptedFileTypes([
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                ])
+                                ->directory('excel-uploads')
+                                ->disk('public')
+                                ->maxSize(10240)
+                                ->helperText('Format: XLSX - Maks 10 MB')
+                                ->required()
+                                ->columnSpanFull(),
+                        ]),
+                ]),
+
+            Section::make('Pratinjau Tabel')
                 ->schema([
-                    TextInput::make('label_baris')
-                        ->label('Label / Baris')
-                        ->placeholder('Contoh: Laki-laki, SD, Dusun I')
-                        ->helperText('Label yang ditampilkan di sumbu X chart atau baris tabel'),
-
-                    TextInput::make('nilai')
-                        ->label('Nilai')
-                        ->numeric()
-                        ->required()
-                        ->placeholder('Contoh: 4872'),
-
-                    FileUpload::make('file_excel')
-                        ->label('Upload Excel (Opsional)')
-                        ->acceptedFileTypes([
-                            'application/vnd.ms-excel',
-                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                        ])
-                        ->directory('excel-uploads')
-                        ->disk('public')
-                        ->nullable()
-                        ->helperText('Upload file Excel sumber data (.xls / .xlsx)'),
-
-                    Toggle::make('is_active')
-                        ->label('Aktif')
-                        ->default(true),
+                    Placeholder::make('pratinjau')
+                        ->label('')
+                        ->content('Tabel akan tampil di sini setelah upload')
+                        ->columnSpanFull(),
                 ])
-                ->columns(2),
+                ->columnSpanFull(),
         ]);
     }
 
@@ -147,13 +181,13 @@ class InputDataTabelResource extends Resource
                     ->label('Status'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->defaultSort('updated_at', 'desc')
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
